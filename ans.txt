@@ -1,0 +1,396 @@
+Problem (benchmarking_script): 4 points
+
+(a) Write a script to perform basic end-to-end benchmarking of the forward and backward passes in your model. Specifically, your script should support the following:
+• Given hyperparameters (e.g., number of layers), initialize a model.
+• Generate a random batch of data.
+• Run w warm-up steps (before you start measuring time), then time the execution of n steps (either only forward, or both forward and backward passes, depending on an argument). For timing, you can use the Python timeit module (e.g., either using the timeit function, or using timeit.default_timer(), which gives you the system’s highest resolution clock, thus a better default for benchmarking than time.time()).
+• Call torch.cuda.synchronize() after each step.
+
+Deliverable: A script that will initialize a basics Transformer model with the given hyperparameters, create a random batch of data, and time forward and backward passes.
+
+run commands: 
+only forward pass:
+
+uv run python cs336_systems/benchmarking_script.py --n_layers 4 --d_model 512 --n_heads 16 --batch_size 64
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 4, 'd_model': 512, 'num_heads': 16, 'd_ff': 1344, 'device': device(type='cuda')}
+model parameters: 22.696M
+performing warmup for 5 steps...
+benchmarking...
+results (forward only):
+mean time: 106.39 ms
+std dev: 1.49 ms
+
+
+both forward and backward:
+uv run python cs336_systems/benchmarking_script.py --n_layers 4 --d_model 512 --n_heads 16 --batch_size 64 --backward
+
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 4, 'd_model': 512, 'num_heads': 16, 'd_ff': 1344, 'device': device(type='cuda')}
+model parameters: 22.696M
+performing warmup for 5 steps...
+benchmarking...
+results (forward + backward):
+mean time: 352.83 ms
+std dev: 1.69 ms
+
+
+(b) Time the forward and backward passes for the model sizes described in §1.1.2. Use 5 warmup steps and compute the average and standard deviation of timings over 10 measurement steps. How long does a forward pass take? How about a backward pass? Do you see high variability across measurements, or is the standard deviation small?
+
+1. small:
+
+uv run python cs336_systems/benchmarking_script.py --d_model 768 --d_ff 3072 --n_layers 12 --n_heads 12 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 10
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 12, 'd_model': 768, 'num_heads': 12, 'd_ff': 3072, 'device': device(type='cuda')}
+model parameters: 128.625M
+performing warmup for 5 steps...
+benchmarking...
+results (forward only):
+mean time: 34.57 ms
+std dev: 0.22 ms
+
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 12, 'd_model': 768, 'num_heads': 12, 'd_ff': 3072, 'device': device(type='cuda')}
+model parameters: 128.625M
+performing warmup for 5 steps...
+benchmarking...
+results (forward + backward):
+mean time: 108.51 ms
+std dev: 1.89 ms
+
+
+2. medium
+
+uv run python cs336_systems/benchmarking_script.py --d_model 1024 --d_ff 4096 --n_layers 24 --n_heads 16 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 10
+
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 24, 'd_model': 1024, 'num_heads': 16, 'd_ff': 4096, 'device': device(type='cuda')}
+model parameters: 423.183M
+performing warmup for 5 steps...
+benchmarking...
+results (forward only):
+mean time: 109.64 ms
+std dev: 3.14 ms
+
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 24, 'd_model': 1024, 'num_heads': 16, 'd_ff': 4096, 'device': device(type='cuda')}
+model parameters: 423.183M
+performing warmup for 5 steps...
+benchmarking...
+results (forward + backward):
+mean time: 320.68 ms
+std dev: 1.05 ms
+
+
+3. large
+
+uv run python cs336_systems/benchmarking_script.py --d_model 1280 --d_ff 5120 --n_layers 36 --n_heads 20 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 10
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 36, 'd_model': 1280, 'num_heads': 20, 'd_ff': 5120, 'device': device(type='cuda')}
+model parameters: 969.412M
+performing warmup for 5 steps...
+benchmarking...
+results (forward only):
+mean time: 232.65 ms
+std dev: 2.07 ms
+
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 36, 'd_model': 1280, 'num_heads': 20, 'd_ff': 5120, 'device': device(type='cuda')}
+model parameters: 969.412M
+performing warmup for 5 steps...
+benchmarking...
+results (forward + backward):
+mean time: 706.12 ms
+std dev: 1.25 ms
+
+
+4. xl
+
+uv run python cs336_systems/benchmarking_script.py --d_model 1600 --d_ff 6400 --n_layers 48 --n_heads 25 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 10
+
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 48, 'd_model': 1600, 'num_heads': 25, 'd_ff': 6400, 'device': device(type='cuda')}
+model parameters: 1998.235M
+performing warmup for 5 steps...
+benchmarking...
+results (forward only):
+mean time: 482.49 ms
+std dev: 2.92 ms
+
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 48, 'd_model': 1600, 'num_heads': 25, 'd_ff': 6400, 'device': device(type='cuda')}
+model parameters: 1998.235M
+performing warmup for 5 steps...
+benchmarking...
+results (forward + backward):
+mean time: 1435.72 ms
+std dev: 5.31 ms
+
+
+5. 2.35B
+
+uv run python cs336_systems/benchmarking_script.py --d_model 3200 --d_ff 25600 --n_layers 8 --n_heads 4 --batch_size 4 --vocab_size 10000 --warmup_steps 0 --n_steps 10
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 8, 'd_model': 3200, 'num_heads': 4, 'd_ff': 25600, 'device': device(type='cuda')}
+model parameters: 2357.814M
+performing warmup for 5 steps...
+benchmarking...
+results (forward only):
+mean time: 458.62 ms
+std dev: 2.12 ms
+
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 8, 'd_model': 3200, 'num_heads': 4, 'd_ff': 25600, 'device': device(type='cuda')}
+model parameters: 2357.814M
+performing warmup for 5 steps...
+benchmarking...
+results (forward + backward):
+mean time: 1268.54 ms
+std dev: 3.52 ms
+
+
+| Model  | Fwd (ms) | Fwd+Bwd (ms) | Ratio  |
+| ------ | -------- | ------------ | ------ |
+| small  | 34.6     | 108.5        | ~3.14× |
+| medium | 109.6    | 320.7        | ~2.9×  |
+| large  | 232.6    | 706.1        | ~3.03× |
+| xl     | 482.5    | 1435.7       | ~2.97× |
+| 2.35B  | 458.6    | 1268.5       | ~2.77× |
+
+~3x
+
+(c) One caveat of benchmarking is not performing the warm-up steps. Repeat your analysis without the warm-up steps. How does this affect your results? Why do you think this happens? Also try to run the script with 1 or 2 warm-up steps. Why might the result still be different?
+
+uv run python cs336_systems/benchmarking_script.py --d_model 3200 --d_ff 25600 --n_layers 8 --n_heads 4 --batch_size 4 --vocab_size 10000 --warmup_steps 0 --n_steps 10
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 8, 'd_model': 3200, 'num_heads': 4, 'd_ff': 25600, 'device': device(type='cuda')}
+model parameters: 2357.814M
+benchmarking...
+results (forward only):
+mean time: 548.18 ms
+std dev: 273.68 ms
+
+
+tarnsformerLM config: {'vocab_size': 10000, 'context_length': 256, 'num_layers': 8, 'd_model': 3200, 'num_heads': 4, 'd_ff': 25600, 'device': device(type='cuda')}
+model parameters: 2357.814M
+benchmarking...
+results (forward + backward):
+mean time: 1362.45 ms
+std dev: 309.48 ms
+
+-> high standard deviation
+
+---
+
+Problem (nsys_profile): 5 points
+
+Profile your forward pass, backward pass, and optimizer step using nsys with each of the model sizes described in Table 1 and context lengths of 128, 256, 512 and 1024 (you may run out of memory with some of these context lengths for the larger models, in which case just note it in your report).
+
+commands:
+
+nsys profile python -c "import torch; a=torch.randn(1000,1000,device='cuda'); b=a@a; torch.cuda.synchronize()"
+
+
+uv run nsys profile -o fwd_profile --force-overwrite true python cs336_systems/nsys_profile.py --d_model 768 --d_ff 3072 --n_layers 12 --n_heads 12 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 10
+
+
+uv run nsys profile -o train_step_profile --force-overwrite true python cs336_systems/nsys_profile.py --include_optimizer --d_model 768 --d_ff 3072 --n_layers 12 --n_heads 12 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 10
+
+
+(a) What is the total time spent on your forward pass? Does it match what we had measured before with the Python standard library?
+Deliverable: A 1-2 sentence response.
+
+yes (within a few ms)
+
+uv run nsys profile -o train_step_profile --force-overwrite true python cs336_systems/nsys_profile.py --include_optimizer --d_model 768 --d_ff 3072 --n_layers 12 --n_heads 12 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 10
+
+1. large model:
+
+
+uv run nsys profile -o fwd_profile_2_35_b --force-overwrite true python cs336_systems/nsys_profile.py --d_model 1280 --d_ff 5120 --n_layers 36 --n_heads 20 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 10
+
+results (forward only):
+mean time: 234.07 ms
+std dev: 1.92 ms
+
+uv run nsys profile -o fwd_bwd_profile_2_35_b --force-overwrite true python cs336_systems/nsys_profile.py --d_model 1280 --d_ff 5120 --n_layers 36 --n_heads 20 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 10 --backward
+
+results (foward + backward):
+mean time: 709.57 ms
+std dev: 1.48 ms
+
+uv run nsys profile -o fwd_bwd_opt_profile_2_35_b --force-overwrite true python cs336_systems/nsys_profile.py --d_model 1280 --d_ff 5120 --n_layers 36 --n_heads 20 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 10 --backward --include_optimizer
+
+results (forward + backward + optimizer):
+mean time: 867.70 ms
+std dev: 1.82 ms
+
+(b) What CUDA kernel takes the most cumulative GPU time during the forward pass? How many times is this kernel invoked during a single forward pass of your model? Is it the same kernel that takes the most runtime when you do both forward and backward passes? (Hint: look at the “CUDA GPU Kernel Summary” under “Stats Systems View”, and filter using NVTX ranges to identify which parts of the model are responsible for which kernels.)
+Deliverable: A 1-2 sentence response.
+
+fwd:
+Time	Total Time	Instances	Avg	Med	Min	Max	StdDev	Name
+70.9%	83.312 ms	96	867.838 μs	1.056 ms	285.984 μs	1.091 ms	304.322 μs	ampere_sgemm_128x64_tn
+
+
+(c) Although the vast majority of FLOPs take place in matrix multiplications, you will notice that several other kernels still take a non-trivial amount of the overall runtime. What other kernels besides matrix multiplies do you see accounting for non-trivial CUDA runtime in the forward pass?
+Deliverable: A 1-2 sentence response.
+
+some other kernals in fwd:
+Time	Total Time	Instances	Avg	Med	Min	Max	StdDev	Name
+4.4%	4.968 ms	38	130.747 μs	130.736 μs	128.896 μs	134.177 μs	870 ns	void at::native::vectorized_elementwise_kernel<(int)4, at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>, std::array<char *, (unsigned long)3>>(int, T2, T3)
+
+Time	Total Time	Instances	Avg	Med	Min	Max	StdDev	Name
+3.5%	4.039 ms	195	20.713 μs	19.872 μs	17.824 μs	25.792 μs	2.389 μs	void at::native::elementwise_kernel<(int)128, (int)2, void at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)
+
+
+(d) Profile running one complete training step with your implementation of AdamW (i.e., the forward pass, computing the loss and running a backward pass, and finally an optimizer step, as you’d do during training). How does the fraction of time spent on matrix multiplication change, compared to doing inference (forward pass only)? How about other kernels?
+Deliverable: A 1-2 sentence response.
+
+fwd only:
+Time	Total Time	Instances	Avg	Med	Min	Max	StdDev	Name
+70.3%	80.209 ms	96	835.510 μs	920.658 μs	242.241 μs	1.109 ms	301.794 μs	ampere_sgemm_128x64_tn
+
+fwd + bwd + opt:
+Time	Total Time	Instances	Avg	Med	Min	Max	StdDev	Name
+18.4%	156.201 ms	181	862.990 μs	972.355 μs	242.241 μs	2.167 ms	320.811 μs	ampere_sgemm_128x64_tn
+
+bwd, opt introduced memory-bound operations
+
+
+(e) Compare the runtime of the softmax operation versus the matrix multiplication operations within the self-attention layer of your model during a forward pass. How does the difference in runtimes compare to the difference in FLOPs?
+Deliverable: A 1-2 sentence response.
+
+computing attention scores: [126.959 * 1e-6s]
+Time	Total Time	Instances	Avg	Med	Min	Max	StdDev	Name
+87.7%	715.426 μs	1	715.426 μs	715.426 μs	715.426 μs	715.426 μs	0 ns	ampere_sgemm_128x64_tn
+
+masking: [83.434 * 1e-6s]
+Time	Total Time	Instances	Avg	Med	Min	Max	StdDev	Name
+19.3%	17.888 μs	1	17.888 μs	17.888 μs	17.888 μs	17.888 μs	0 ns	void at::native::elementwise_kernel<(int)128, (int)2, void at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)
+
+computing softmax: [112.235 * 1e-6s]
+Time	Total Time	Instances	Avg	Med	Min	Max	StdDev	Name
+58.6%	79.296 μs	4	19.824 μs	19.776 μs	18.304 μs	21.440 μs	1.285 μs	void at::native::elementwise_kernel<(int)128, (int)2, void at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<float, float, float, at::native::binary_internal::MulFunctor<float>>>(at::TensorIteratorBase &, const T1 &)::[lambda(int) (instance 1)]>(int, T3)
+
+final mat_mul: [110.539 * 1e-6s]
+Time	Total Time	Instances	Avg	Med	Min	Max	StdDev	Name
+58.2%	85.856 μs	1	85.856 μs	85.856 μs	85.856 μs	85.856 μs	0 ns	ampere_sgemm_128x128_tn
+
+Matmul = many FLOPs, fast
+Softmax = few FLOPs, slow
+
+softmax -> reductions, synchronization, global memory reads/writes
+
+---
+
+Problem (mixed_precision_accumulation): 1 point
+Run the following code and commment on the (accuracy of the) results.
+
+s = torch.tensor(0,dtype=torch.float32)for i in range(1000):
+s += torch.tensor(0.01,dtype=torch.float32)
+print(s)
+
+s = torch.tensor(0,dtype=torch.float16)for i in range(1000):
+s += torch.tensor(0.01,dtype=torch.float16)
+print(s)
+
+s = torch.tensor(0,dtype=torch.float32)for i in range(1000):
+s += torch.tensor(0.01,dtype=torch.float16)
+print(s)
+
+s = torch.tensor(0,dtype=torch.float32)for i in range(1000):
+x = torch.tensor(0.01,dtype=torch.float16)
+s += x.type(torch.float32)
+print(s)
+
+Deliverable: A 2-3 sentence response.
+
+1. FP32 Accumulation
+Result: 10.00013351
+
+2. FP16 Accumulation
+Result: 9.95312500
+
+3. Mixed Precision (FP32 Accumulator + FP16 Value)
+Result: 10.00213623
+
+4. Mixed Precision (Explicit Cast)
+Result: 10.00213623
+
+---
+
+Problem (benchmarking_mixed_precision): 2 points
+(a) Consider the ToyModel:
+
+Suppose we are training the model on a GPU and that the model parameters are originally in FP32. We’d like to use autocasting mixed precision with FP16. What are the data types of:
+• the model parameters within the autocast context,
+• the output of the first feed-forward layer (ToyModel.fc1),
+• the output of layer norm (ToyModel.ln),
+• the model’s predicted logits,
+• the loss,
+• and the model’s gradients?Deliverable: The data types for each of the components listed above.
+
+parameter dtype: torch.float32
+input: torch.float32
+after fc1: torch.float16
+after relu: torch.float16
+after layernorm: torch.float32
+after fc2 (logits): torch.float16
+logits outside model: torch.float16
+loss dtype: torch.float32
+
+GRADIENT DTYPES:
+fc1.weight grad dtype: torch.float32
+ln.weight grad dtype: torch.float32
+ln.bias grad dtype: torch.float32
+fc2.weight grad dtype: torch.float32
+
+(b) You should have seen that FP16 mixed precision autocasting treats the layer normalization layer differently than the feed-forward layers. What parts of layer normalization are sensitive to mixed precision? If we use BF16 instead of FP16, do we still need to treat layer normalization differently? Why or why not?
+Deliverable: A 2-3 sentence response.
+
+mean and variance, which involve sum and division by small numbers
+
+(c) Modify your benchmarking script to optionally run the model using mixed precision with BF16. Time the forward and backward passes with and without mixed-precision for each language model size described in §1.1.2. Compare the results of using full vs. mixed precision, and comment on any trends as model size changes. You may find the nullcontext no-op context manager to be useful.
+Deliverable: A 2-3 sentence response with your timings and commentary
+
+fwd only:
+
+| Model  | Params | FP32 (ms) | BF16 (ms) | Speedup   |
+| ------ | ------ | --------- | --------- | --------- |
+| Small  | 128M   | 34.57     | 19.94     | 1.73×     |
+| Medium | 423M   | 109.64    | 46.15     | 2.38×     |
+| Large  | 969M   | 232.65    | 97.46     | 2.39×     |
+| XL     | 1.99B  | 482.49    | 175.44    | 2.75×     |
+| 2.35B  | 2.36B  | 458.62    | 112.58    | 4.07×     |
+
+
+fwd + bwd :
+| Model  | Params | FP32 (ms) | BF16 (ms) | Speedup   |
+| ------ | ------ | --------- | --------- | --------- |
+| Small  | 128M   | 108.51    | 56.47     | 1.92×     |
+| Medium | 423M   | 320.68    | 149.26    | 2.15×     |
+| Large  | 969M   | 706.12    | 311.31    | 2.27×     |
+| XL     | 1.99B  | 1435.72   | 567.39    | 2.53×     |
+| 2.35B  | 2.36B  | 1268.54   | 408.03    | 3.11×     |
+
+
+---
+
+Problem (memory_profiling): 4 points
+
+Profile your forward pass, backward pass, and optimizer step of the 2.7B model from Table 1 with context lengths of 128, 256 and 512.
+
+(a) Add an option to your profiling script to run your model through the memory profiler. It may be helpful to reuse some of your previous infrastructure (e.g., to activate mixed-precision, load specific model sizes, etc). Then, run your script to get a memory profile of the 2.7B model when either doing inference only (just forward pass) or a full training step. How do your memory timelines look like? Can you tell which stage is running based on the peaks you see?
+Deliverable: Two images of the “Active memory timeline” of a 2.7B model, from the memory_viztool: one for the forward pass, and one for running a full training step (forward and backward passes, then optimizer step), and a 2-3 sentence response.
+
+(b) What is the peak memory usage of each context length when doing a forward pass? What about when doing a full training step?
+Deliverable: A table with two numbers per context length.
+
+(c) Find the peak memory usage of the 2.7B model when using mixed-precision, for both a forward pass and a full optimizer step. Does mixed-precision significantly affect memory usage?
+Deliverable: A 2-3 sentence response.
+
+(d) Consider the 2.7B model. At our reference hyperparameters, what is the size of a tensor of activations in the Transformer residual stream, in single-precision? Give this size in MB (i.e., divide the number of bytes by 10242).
+Deliverable: A 1-2 sentence response with your derivation.
+
+(e) Now look closely at the “Active Memory Timeline” from pytorch.org/memory_viz of a memory snapshot of the 2.7B model doing a forward pass. When you reduce the “Detail” level, the tool hides the smallest allocations to the corresponding level (e.g., putting “Detail” at 10% only shows the 10% largest allocations). What is the size of the largest allocations shown? Looking through the stack trace, can you tell where those allocations come from?
