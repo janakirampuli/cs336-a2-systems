@@ -381,8 +381,15 @@ Problem (memory_profiling): 4 points
 
 Profile your forward pass, backward pass, and optimizer step of the 2.7B model from Table 1 with context lengths of 128, 256 and 512.
 
+(running for 969M large model)
+
 (a) Add an option to your profiling script to run your model through the memory profiler. It may be helpful to reuse some of your previous infrastructure (e.g., to activate mixed-precision, load specific model sizes, etc). Then, run your script to get a memory profile of the 2.7B model when either doing inference only (just forward pass) or a full training step. How do your memory timelines look like? Can you tell which stage is running based on the peaks you see?
 Deliverable: Two images of the “Active memory timeline” of a 2.7B model, from the memory_viztool: one for the forward pass, and one for running a full training step (forward and backward passes, then optimizer step), and a 2-3 sentence response.
+
+uv run python cs336_systems/memory_profiling.py --d_model 1280 --d_ff 5120 --n_layers 36 --n_heads 20 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 3 --max_seq_len 256 --precision bf16 --profile --output_file mem_fwd_256.pickle
+
+uv run python cs336_systems/memory_profiling.py --d_model 1280 --d_ff 5120 --n_layers 36 --n_heads 20 --batch_size 4 --vocab_size 10000 --warmup_steps 5 --n_steps 3 --max_seq_len 256 --include_optimizer --precision bf16 --profile --output_file mem_fwd_bwd_opt_256.pickle
+
 
 (b) What is the peak memory usage of each context length when doing a forward pass? What about when doing a full training step?
 Deliverable: A table with two numbers per context length.
@@ -394,3 +401,60 @@ Deliverable: A 2-3 sentence response.
 Deliverable: A 1-2 sentence response with your derivation.
 
 (e) Now look closely at the “Active Memory Timeline” from pytorch.org/memory_viz of a memory snapshot of the 2.7B model doing a forward pass. When you reduce the “Detail” level, the tool hides the smallest allocations to the corresponding level (e.g., putting “Detail” at 10% only shows the 10% largest allocations). What is the size of the largest allocations shown? Looking through the stack trace, can you tell where those allocations come from?
+
+---
+
+Problem (pytorch_attention): 2 points
+
+(a) Benchmark your attention implementation at different scales. Write a script that will:
+
+(a) Fix the batch size to 8 and don’t use multihead attention (i.e. remove the head dimension).
+(b) Iterate through the cartesian product of [16, 32, 64, 128] for the head embedding dimension dmodel, and [256, 1024, 4096, 8192, 16384] for the sequence length.
+(c) Create random inputs Q, K, V for the appropriate size.
+(d) Time 100 forward passes through attention using the inputs.
+(e) Measure how much memory is in use before the backward pass starts, and time 100 backward passes.
+(f) Make sure to warm up, and to call torch.cuda.synchronize() after each forward/backward pass.
+
+Report the timings (or out-of-memory errors) you get for these configurations. At what size do you get out-of-memory errors? Do the accounting for the memory usage of attention in one of the smallest configurations you find that runs out of memory (you can use the equations for memory usage of Transformers from Assignment 1). How does the memory saved for backward change with the sequence length? What would you do to eliminate this memory cost?
+
+Deliverable: A table with your timings, your working out for the memory usage, and a 1-2 paragraph response.
+
+command: 
+
+uv run python cs336_systems/benchmark_attention.py
+
+output:
+
+seq_len    | d_model    | fwd_time (ms)   | bwd_time (ms)   | mem (MB)        | status    
+256        | 16         | 0.1155          | 2.4993          | 23.00           | OK        
+256        | 32         | 0.1158          | 0.3698          | 24.25           | OK        
+256        | 64         | 0.1150          | 0.3688          | 26.25           | OK        
+256        | 128        | 0.1159          | 0.3669          | 30.25           | OK        
+1024       | 16         | 0.5062          | 1.1307          | 119.25          | OK        
+1024       | 32         | 0.5399          | 1.1459          | 120.25          | OK        
+1024       | 64         | 0.5752          | 1.2089          | 128.25          | OK        
+1024       | 128        | 0.6647          | 1.4206          | 144.25          | OK        
+4096       | 16         | 7.9616          | 17.8252         | 1580.25         | OK        
+4096       | 32         | 8.3532          | 18.2886         | 1584.25         | OK        
+4096       | 64         | 8.8255          | 18.8486         | 1616.25         | OK        
+4096       | 128        | 10.3637         | 20.7675         | 1680.25         | OK        
+8192       | 16         | 32.1703         | 72.4383         | 6248.25         | OK        
+8192       | 32         | 33.7554         | 74.5264         | 6224.25         | OK        
+8192       | 64         | 35.7896         | 77.1412         | 6288.25         | OK        
+8192       | 128        | 42.5014         | 86.4183         | 6416.25         | OK        
+16384      | 16         | N/A             | N/A             | OOM             | FAIL      
+16384      | 32         | N/A             | N/A             | OOM             | FAIL      
+16384      | 64         | N/A             | N/A             | OOM             | FAIL      
+16384      | 128        | N/A             | N/A             | OOM             | FAIL 
+
+mem ~ O(seq_len^2)
+quadatric memory complexity
+seq_len = 16384 might require ~ 25GB
+
+attention matrix mem:
+scores: (QK^T) = b * n_head * seq_len * seq_len * 4 bytes 
+probs (softmax) = b * n_head * seq_len * seq_len * 4 bytes
+attn (attention) = b * n_head * seq_len * d_model * 4 bytes
+
+mem: O(seq_len^2)
+
