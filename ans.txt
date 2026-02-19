@@ -426,30 +426,30 @@ uv run python cs336_systems/benchmark_attention.py
 output:
 
 seq_len    | d_model    | fwd_time (ms)   | bwd_time (ms)   | mem (MB)        | status    
-256        | 16         | 0.1155          | 2.4993          | 23.00           | OK        
-256        | 32         | 0.1158          | 0.3698          | 24.25           | OK        
-256        | 64         | 0.1150          | 0.3688          | 26.25           | OK        
-256        | 128        | 0.1159          | 0.3669          | 30.25           | OK        
-1024       | 16         | 0.5062          | 1.1307          | 119.25          | OK        
-1024       | 32         | 0.5399          | 1.1459          | 120.25          | OK        
-1024       | 64         | 0.5752          | 1.2089          | 128.25          | OK        
-1024       | 128        | 0.6647          | 1.4206          | 144.25          | OK        
-4096       | 16         | 7.9616          | 17.8252         | 1580.25         | OK        
-4096       | 32         | 8.3532          | 18.2886         | 1584.25         | OK        
-4096       | 64         | 8.8255          | 18.8486         | 1616.25         | OK        
-4096       | 128        | 10.3637         | 20.7675         | 1680.25         | OK        
-8192       | 16         | 32.1703         | 72.4383         | 6248.25         | OK        
-8192       | 32         | 33.7554         | 74.5264         | 6224.25         | OK        
-8192       | 64         | 35.7896         | 77.1412         | 6288.25         | OK        
-8192       | 128        | 42.5014         | 86.4183         | 6416.25         | OK        
+256        | 16         | 0.1188          | 2.5328          | 25.13           | OK        
+256        | 32         | 0.1204          | 0.3838          | 26.00           | OK        
+256        | 64         | 0.1215          | 0.3825          | 27.75           | OK        
+256        | 128        | 0.1213          | 0.3794          | 31.25           | OK        
+1024       | 16         | 0.4388          | 0.8691          | 150.75          | OK        
+1024       | 32         | 0.4465          | 0.8893          | 151.25          | OK        
+1024       | 64         | 0.4732          | 0.9210          | 158.25          | OK        
+1024       | 128        | 0.5197          | 1.0231          | 172.25          | OK        
+4096       | 16         | 6.6516          | 13.9358         | 2090.25         | OK        
+4096       | 32         | 6.9035          | 14.1432         | 2092.25         | OK        
+4096       | 64         | 7.1765          | 14.5369         | 2120.25         | OK        
+4096       | 128        | 7.9176          | 15.7581         | 2176.25         | OK        
+8192       | 16         | 26.9023         | 56.7155         | 8292.25         | OK        
+8192       | 32         | 27.9918         | 57.6839         | 8264.25         | OK        
+8192       | 64         | 29.0571         | 58.9540         | 8320.25         | OK        
+8192       | 128        | 31.9183         | 64.1194         | 8432.25         | OK        
 16384      | 16         | N/A             | N/A             | OOM             | FAIL      
 16384      | 32         | N/A             | N/A             | OOM             | FAIL      
 16384      | 64         | N/A             | N/A             | OOM             | FAIL      
-16384      | 128        | N/A             | N/A             | OOM             | FAIL 
+16384      | 128        | N/A             | N/A             | OOM             | FAIL
 
 mem ~ O(seq_len^2)
 quadatric memory complexity
-seq_len = 16384 might require ~ 25GB
+seq_len = 16384 might require ~ 32GB
 
 attention matrix mem:
 scores: (QK^T) = b * n_head * seq_len * seq_len * 4 bytes 
@@ -457,4 +457,42 @@ probs (softmax) = b * n_head * seq_len * seq_len * 4 bytes
 attn (attention) = b * n_head * seq_len * d_model * 4 bytes
 
 mem: O(seq_len^2)
+
+---
+
+Problem (torch_compile): 2 points
+(a) Extend your attention benchmarking script to include a compiled version of your PyTorch implementation of attention, and compare its performance to the uncompiled version with the same configuration as the pytorch_attention problem above.
+Deliverable: A table comparing your forward and backward pass timings for your compiled attention module with the uncompiled version from the pytorch_attention problem above.
+
+(b) Now, compile your entire Transformer model in your end-to-end benchmarking script. How does
+the performance of the forward pass change? What about the combined forward and backward
+passes and optimizer steps?
+Deliverable: A table comparing your vanilla and compiled Transformer model.
+
+
+uv run python cs336_systems/benchmark_compiled_attention.py
+
+seq_len    | d_model    | fwd_time (ms)   | cmp_fwd_time (ms)    | fwd_speedup  | bwd_time (ms)   | cmp_bwd_time (ms)    | bwd_speedup  | mem (MB)        | cmp_memory (MB) | status    
+256        | 16         | 0.1201          | 0.1413               | 0.8502       | 0.3671          | 0.3157               | 1.1628       | 25.13           | 21.13           | OK        
+256        | 32         | 0.1197          | 0.1815               | 0.6599       | 0.3868          | 0.3226               | 1.1991       | 26.00           | 22.00           | OK        
+256        | 64         | 0.1204          | 0.1814               | 0.6636       | 0.3816          | 0.3262               | 1.1697       | 27.75           | 23.75           | OK        
+256        | 128        | 0.1208          | 0.1818               | 0.6646       | 0.3838          | 0.3206               | 1.1972       | 31.25           | 27.25           | OK        
+1024       | 16         | 0.4392          | 0.2978               | 1.4750       | 0.8708          | 0.5310               | 1.6397       | 150.75          | 83.75           | OK        
+1024       | 32         | 0.4492          | 0.3063               | 1.4664       | 0.8896          | 0.5576               | 1.5953       | 151.25          | 87.25           | OK        
+1024       | 64         | 0.4763          | 0.3346               | 1.4236       | 0.9195          | 0.6033               | 1.5242       | 158.25          | 94.25           | OK        
+1024       | 128        | 0.5212          | 0.4039               | 1.2903       | 1.0674          | 0.7381               | 1.4461       | 172.25          | 108.25          | OK        
+4096       | 16         | 6.6503          | 5.1474               | 1.2920       | 13.9352         | 9.4763               | 1.4705       | 2090.25         | 1054.25         | OK        
+4096       | 32         | 6.9143          | 5.4317               | 1.2729       | 14.1503         | 9.6756               | 1.4625       | 2092.25         | 1068.25         | OK        
+4096       | 64         | 7.1720          | 5.7118               | 1.2556       | 14.5493         | 10.0626              | 1.4459       | 2120.25         | 1096.25         | OK        
+4096       | 128        | 7.9700          | 6.5800               | 1.2112       | 15.8304         | 11.6796              | 1.3554       | 2176.25         | 1152.25         | OK        
+8192       | 16         | 26.9023         | 26.0188              | 1.0340       | 56.7300         | 39.4336              | 1.4386       | 8292.25         | 4140.25         | OK        
+8192       | 32         | 28.0258         | 27.1994              | 1.0304       | 57.6825         | 40.6665              | 1.4184       | 8264.25         | 4168.25         | OK        
+8192       | 64         | 29.1186         | 28.2625              | 1.0303       | 58.9873         | 41.8939              | 1.4080       | 8320.25         | 4224.25         | OK        
+8192       | 128        | 32.0981         | 31.4579              | 1.0204       | 64.2457         | 48.4701              | 1.3255       | 8432.25         | 4336.25         | OK        
+16384      | 16         | N/A             | N/A                  | N/A          | N/A             | N/A                  | N/A          | OOM             | OOM             | FAIL      
+16384      | 32         | N/A             | N/A                  | N/A          | N/A             | N/A                  | N/A          | OOM             | OOM             | FAIL      
+16384      | 64         | N/A             | N/A                  | N/A          | N/A             | N/A                  | N/A          | OOM             | OOM             | FAIL      
+16384      | 128        | N/A             | N/A                  | N/A          | N/A             | N/A                  | N/A          | OOM             | OOM             | FAIL  
+
+---
 
